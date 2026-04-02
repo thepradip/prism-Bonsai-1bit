@@ -10,6 +10,9 @@ from .models import MODELS, download_llama_binary, download_model, resolve_model
 from .questions import QA_QUESTIONS
 from .runner import run_benchmark
 from .benchmarks.memory import run_memory_benchmark
+from .benchmarks.turboquant_eval import (
+    run_full_evaluation, print_ieee_summary, EVAL_QUESTIONS, KV_CONFIGS,
+)
 from .reporting.pdf import generate_pdf
 
 
@@ -74,6 +77,48 @@ def cmd_download(args):
     for name in model_names:
         download_model(name)
     print("Done.")
+
+
+def cmd_eval(args):
+    """Run full Bonsai + TurboQuant IEEE evaluation."""
+    model_names = resolve_model_names(args.models)
+    if not model_names:
+        print("No valid models specified."); sys.exit(1)
+
+    print(f"Bonsai + TurboQuant IEEE Evaluation")
+    print(f"Models: {', '.join(model_names)}")
+    print(f"Configs: {', '.join(c['name'] for c in KV_CONFIGS)}")
+    print(f"Questions: {len(EVAL_QUESTIONS)}")
+
+    download_llama_binary()
+    for name in model_names:
+        download_model(name)
+
+    results = run_full_evaluation(model_names)
+    print_ieee_summary(results)
+
+    # Save JSON
+    json_path = args.output or "turboquant_eval_results.json"
+    with open(json_path, "w") as f:
+        json.dump(results, f, indent=2, default=str)
+    print(f"\nJSON saved to {json_path}")
+
+    if args.pdf:
+        # Build combined QA results for PDF (use FP16 baseline for per-question view)
+        qa_for_pdf = {}
+        for m in model_names:
+            combined = []
+            for cfg in KV_CONFIGS:
+                cfg_results = results["qa_results"][m][cfg["short"]]
+                for r in cfg_results:
+                    r_copy = dict(r)
+                    r_copy["description"] = f"[{cfg['short']}] {r['desc']}"
+                    r_copy["category"] = r["cat"]
+                    r_copy["difficulty"] = r["diff"]
+                    combined.append(r_copy)
+            qa_for_pdf[m] = combined
+        generate_pdf(qa_for_pdf, None, args.pdf, results["timestamp"])
+        print(f"PDF saved to {args.pdf}")
 
 
 def cmd_list(args):
@@ -147,6 +192,12 @@ def main():
     p_run.add_argument("--pdf", type=str, default=None, help="Generate PDF report at this path")
     p_run.add_argument("-o", "--output", type=str, default=None, help="JSON output path (default: bonsai_bench_results.json)")
 
+    # eval (TurboQuant)
+    p_eval = sub.add_parser("eval", help="Run Bonsai + TurboQuant IEEE evaluation (40 questions x 3 configs)")
+    p_eval.add_argument("-m", "--models", default="all", help="Model(s) to test (default: all)")
+    p_eval.add_argument("--pdf", type=str, default=None, help="Generate PDF report")
+    p_eval.add_argument("-o", "--output", type=str, default=None, help="JSON output path")
+
     # download
     p_dl = sub.add_parser("download", help="Download models and binaries")
     p_dl.add_argument("-m", "--models", default="all", help="Model(s) to download (default: all)")
@@ -158,6 +209,8 @@ def main():
 
     if args.command == "run":
         cmd_run(args)
+    elif args.command == "eval":
+        cmd_eval(args)
     elif args.command == "download":
         cmd_download(args)
     elif args.command == "list":
