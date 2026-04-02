@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bonsai-bench"
+version = "0.1.0"
+description = "QA & Memory benchmarking toolkit for PrismML Bonsai 1-bit models"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "PrismML"},
+]
+keywords = ["benchmark", "llm", "1-bit", "quantization", "bonsai", "prismml"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "huggingface-hub>=1.5.0",
+    "fpdf2>=2.8.0",
+]
+
+[project.scripts]
+bonsai-bench = "bonsai_bench.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/PrismML-Eng/Bonsai-demo"
+Repository = "https://github.com/PrismML-Eng/Bonsai-demo"
+
+[tool.setuptools.packages.find]
+include = ["bonsai_bench*"]
