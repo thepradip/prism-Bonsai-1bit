@@ -102,6 +102,12 @@ All downloads are cached in `~/.cache/bonsai-bench/`.
 - macOS (Apple Silicon) or Linux (CUDA GPU)
 - ~4GB disk space for all 3 models
 
+## Acknowledgements
+
+- Models by [PrismML](https://prismml.com) — [Bonsai HuggingFace Collection](https://huggingface.co/collections/prism-ml/bonsai)
+- Inference powered by [PrismML's llama.cpp fork](https://github.com/PrismML-Eng/llama.cpp)
+- Setup patterns inspired by [Bonsai-demo](https://github.com/PrismML-Eng/Bonsai-demo) (Apache 2.0)
+
 ## License
 
 MIT
