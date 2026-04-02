@@ -29,8 +29,8 @@ KV_CONFIGS = [
     {"name": "TurboQuant-Q4 KV", "short": "TQ-Q4", "ctk": "q4_0", "ctv": "q4_0"},
 ]
 
-CONTEXT_SIZES = [1024, 2048, 4096, 16384, 32768]
-CTX_LABELS = ["1K", "2K", "4K", "16K", "32K"]
+CONTEXT_SIZES = [1024, 2048, 4096, 16384, 32768, 65536, 131072]
+CTX_LABELS = ["1K", "2K", "4K", "16K", "32K", "64K", "128K"]
 
 # ── 40 Evaluation Questions ────────────────────────────────────────
 # Organized by category and difficulty for IEEE-grade evaluation
