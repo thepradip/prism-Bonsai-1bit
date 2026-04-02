@@ -115,7 +115,24 @@ def download_llama_binary():
         asset = f"llama-{LLAMA_RELEASE_TAG}-bin-macos-arm64.tar.gz"
         cli_name = "llama-cli"
     elif system == "Linux":
-        asset = f"llama-{LLAMA_RELEASE_TAG}-bin-linux-cuda-12.8-x64.tar.gz"
+        # Auto-detect CUDA version
+        cuda_tag = "12.8"  # default
+        try:
+            nvcc_out = subprocess.check_output(["nvcc", "--version"], stderr=subprocess.STDOUT, text=True)
+            import re as _re
+            m = _re.search(r"release (\d+)\.(\d+)", nvcc_out)
+            if m:
+                major, minor = int(m.group(1)), int(m.group(2))
+                if major >= 13:
+                    cuda_tag = "13.1"
+                elif major == 12 and minor >= 8:
+                    cuda_tag = "12.8"
+                else:
+                    cuda_tag = "12.4"
+                print(f"  Detected CUDA {major}.{minor} -> using build for CUDA {cuda_tag}")
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            print(f"  CUDA version not detected, defaulting to CUDA {cuda_tag}")
+        asset = f"llama-{LLAMA_RELEASE_TAG}-bin-linux-cuda-{cuda_tag}-x64.tar.gz"
         cli_name = "llama-cli"
     else:
         raise RuntimeError(f"Unsupported platform: {system}. Build llama.cpp from source.")
