@@ -13,6 +13,7 @@ from .benchmarks.memory import run_memory_benchmark
 from .benchmarks.turboquant_eval import (
     run_full_evaluation, print_ieee_summary, EVAL_QUESTIONS, KV_CONFIGS,
 )
+from .benchmarks.needle_haystack import run_needle_benchmark, print_needle_report
 from .reporting.pdf import generate_pdf
 
 
@@ -121,6 +122,31 @@ def cmd_eval(args):
         print(f"PDF saved to {args.pdf}")
 
 
+def cmd_needle(args):
+    """Run needle-in-haystack test."""
+    model_names = resolve_model_names(args.models)
+    if not model_names:
+        print("No valid models specified."); sys.exit(1)
+
+    print(f"Needle-in-Haystack Test")
+    print(f"Models: {', '.join(model_names)}")
+    print(f"Context sizes: 4K, 16K, 32K, 64K, 128K")
+    print(f"Needle positions: Start, 25%, Middle, 75%, End")
+    print(f"3 needles x 5 positions x 5 contexts x 3 KV configs per model")
+
+    download_llama_binary()
+    for name in model_names:
+        download_model(name)
+
+    results = run_needle_benchmark(model_names)
+    print_needle_report(results)
+
+    json_path = args.output or "needle_haystack_results.json"
+    with open(json_path, "w") as f:
+        json.dump(results, f, indent=2, default=str)
+    print(f"\nJSON saved to {json_path}")
+
+
 def cmd_list(args):
     """List available models."""
     print("Available Bonsai Models:")
@@ -198,6 +224,11 @@ def main():
     p_eval.add_argument("--pdf", type=str, default=None, help="Generate PDF report")
     p_eval.add_argument("-o", "--output", type=str, default=None, help="JSON output path")
 
+    # needle
+    p_needle = sub.add_parser("needle", help="Run needle-in-haystack context retrieval test (4K-128K)")
+    p_needle.add_argument("-m", "--models", default="all", help="Model(s) to test (default: all)")
+    p_needle.add_argument("-o", "--output", type=str, default=None, help="JSON output path")
+
     # download
     p_dl = sub.add_parser("download", help="Download models and binaries")
     p_dl.add_argument("-m", "--models", default="all", help="Model(s) to download (default: all)")
@@ -211,6 +242,8 @@ def main():
         cmd_run(args)
     elif args.command == "eval":
         cmd_eval(args)
+    elif args.command == "needle":
+        cmd_needle(args)
     elif args.command == "download":
         cmd_download(args)
     elif args.command == "list":
